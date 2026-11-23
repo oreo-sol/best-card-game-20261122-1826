@@ -1,0 +1,176 @@
+/* Ember Duel — the table, the cards and the motion. No images, no fonts
+   from the network: every mark is CSS or inline SVG, so the game plays
+   offline. Suits are colour AND shape; a card stays readable at thumbnail
+   size because its cost, name and attack/health are large and high-contrast. */
+
+* { box-sizing: border-box; }
+/* The title screen and the table both set display in this stylesheet, which
+   beats the browser's own [hidden] rule — so hidden panels need this. */
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #17100c; }
+body { font-family: Georgia, 'Times New Roman', serif; color: #f3e7d3; }
+#app { height: 100%; }
+#status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- title screen ---------- */
+#title-screen {
+  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 30%, #4a2418 0%, #241209 55%, #120906 100%);
+  text-align: center; padding: 20px;
+}
+.title-kicker { letter-spacing: 6px; font-size: 15px; color: #e8a33d; text-transform: uppercase; }
+.title-name {
+  margin: 8px 0 4px; font-size: 92px; line-height: 1; color: #f7d774;
+  text-shadow: 0 0 28px rgba(232, 120, 40, 0.65), 0 4px 0 #7a2d12;
+}
+.title-suits { display: flex; gap: 26px; margin: 10px 0 18px; font-size: 17px; }
+.title-suits span { display: flex; align-items: center; gap: 6px; }
+.title-rules { max-width: 640px; font-size: 17px; line-height: 1.5; color: #e8d9bd; margin: 0 0 22px; }
+.play-button {
+  font-family: Georgia, serif; font-size: 26px; letter-spacing: 3px; cursor: pointer;
+  color: #2a1503; background: linear-gradient(#ffd97a, #e8a33d); border: 2px solid #fff0c0;
+  border-radius: 12px; padding: 12px 54px; box-shadow: 0 6px 0 #7a4a08, 0 10px 24px rgba(0,0,0,0.5);
+}
+.play-button:hover { filter: brightness(1.08); }
+.play-button:active { transform: translateY(4px); box-shadow: 0 2px 0 #7a4a08; }
+.title-hint { margin-top: 18px; font-size: 14px; color: #c9b48f; }
+
+/* ---------- table ---------- */
+#table {
+  height: 100%; display: flex; flex-direction: column; gap: 6px; padding: 10px 18px;
+  background: radial-gradient(ellipse at 50% 40%, #3d2c17 0%, #241a0e 60%, #150e06 100%);
+  transition: filter 0.4s;
+}
+#table.dimmed { filter: brightness(0.45) saturate(0.7); }
+.row { display: flex; align-items: center; gap: 14px; }
+.field { display: flex; align-items: center; gap: 10px; min-height: 148px; padding: 4px 8px;
+  border: 2px dashed rgba(232, 163, 61, 0.25); border-radius: 14px; background: rgba(0,0,0,0.18); }
+.field-empty { color: #a98f66; font-style: italic; font-size: 15px; padding-left: 12px; }
+
+/* hero panels: life, armor, ember */
+.hero { width: 250px; flex: none; background: rgba(0,0,0,0.35); border: 1px solid #6b4a1e;
+  border-radius: 12px; padding: 8px 12px; }
+.hero-name { font-size: 14px; letter-spacing: 2px; color: #e8c98a; text-transform: uppercase; }
+.hero-life { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+.flame-mark { display: inline-flex; }
+.life-number { font-size: 38px; font-weight: bold; color: #ffdf8a; line-height: 1; }
+.armor-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 18px; color: #bcd6f5;
+  background: #2c4258; border-radius: 8px; padding: 1px 8px; }
+.hero-ember { display: flex; align-items: center; gap: 3px; }
+.pip { width: 11px; height: 11px; border-radius: 50%; background: #3a2a18; border: 1px solid #8a6a2a; display: inline-block; }
+.pip.on { background: #ffb63d; box-shadow: 0 0 6px #ff9a1f; }
+.pip.locked { opacity: 0.3; }
+.ember-count { font-size: 13px; color: #d9c49a; margin-left: 6px; }
+.hero.targetable { outline: 3px solid #ffd24d; outline-offset: 2px; cursor: pointer; animation: pulse 0.9s infinite; }
+.hero.shaken { animation: shake 0.4s; }
+
+/* hands */
+.hand { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; overflow: visible; }
+.rival-hand .card-back { width: 52px; height: 74px; }
+.deck-count { font-size: 13px; color: #b49b72; margin-left: 6px; white-space: nowrap; }
+
+/* ---------- cards ---------- */
+.card {
+  position: relative; width: 118px; height: 164px; flex: none; border-radius: 10px;
+  background: linear-gradient(#fff8e6, #f0dfb8); color: #241a10;
+  border: 2px solid #8a6a2a; box-shadow: 0 4px 10px rgba(0,0,0,0.55);
+  padding: 6px 7px; cursor: pointer; transition: transform 0.18s, box-shadow 0.18s;
+}
+.card:hover { transform: translateY(-8px); }
+.card.selected { transform: translateY(-12px); outline: 3px solid #ffd24d; box-shadow: 0 10px 18px rgba(0,0,0,0.6); }
+.card.unplayable { filter: saturate(0.55) brightness(0.82); }
+.card.sleeping { filter: saturate(0.6) brightness(0.88); }
+.card.sleeping::after { content: 'z z'; position: absolute; right: 7px; bottom: 36px; font-size: 11px; color: #7a6a4a; }
+.card.guard { border-color: #5b7a99; box-shadow: 0 0 0 2px #5b7a99, 0 4px 10px rgba(0,0,0,0.55); }
+.card.targetable { outline: 3px solid #ffd24d; outline-offset: 2px; cursor: pointer; animation: pulse 0.9s infinite; }
+.card.just-played { animation: flipIn 0.45s ease-out; }
+.card.lunging { animation: lunge 0.5s ease-in-out; }
+.card-cost {
+  position: absolute; top: -7px; left: -7px; width: 30px; height: 30px; border-radius: 50%;
+  background: #1d4e89; color: #fff; font-size: 17px; font-weight: bold; display: flex;
+  align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.card-name { font-size: 14px; font-weight: bold; text-align: center; min-height: 34px; line-height: 1.15; padding-left: 16px; }
+.card-art { height: 56px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: 3px 0; }
+.card-text { font-size: 11.5px; line-height: 1.25; color: #4a3a22; min-height: 30px; }
+.card-tags { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #8a5a1a; text-align: center; }
+.card-stats { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+.card-stats .atk, .card-stats .hp {
+  width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: bold; color: #fff; border: 2px solid #fff;
+}
+.card-stats .atk { background: #c23a22; }
+.card-stats .hp { background: #2c7a3a; }
+.spell-tag { justify-content: center; font-size: 13px; letter-spacing: 3px; color: #8a5a1a; font-weight: bold; }
+
+/* suit tint on the card face */
+.suit-flame { border-top: 6px solid #d23c2a; }
+.suit-stone { border-top: 6px solid #5b7a99; }
+.suit-thorn { border-top: 6px solid #4a9e4d; }
+.suit-spark { border-top: 6px solid #d9a400; }
+
+/* field creatures are a touch smaller than hand cards */
+.field .card { width: 106px; height: 148px; }
+.field .card-name { font-size: 13px; min-height: 30px; }
+.field .card-art { height: 48px; }
+.field .card-text { display: none; }
+
+.card-back {
+  width: 52px; height: 74px; flex: none; border-radius: 7px; background: linear-gradient(135deg, #7a2d12, #4a1a08);
+  border: 2px solid #e8a33d; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+}
+.back-mark { opacity: 0.9; }
+
+/* mid strip: banner + log */
+.mid-strip { display: flex; align-items: center; gap: 16px; min-height: 58px; }
+.banner { flex: none; width: 460px; font-size: 16px; color: #ffd98a; font-style: italic; }
+.log { flex: 1; font-size: 13px; color: #c9b48f; line-height: 1.35; }
+.log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* controls */
+.controls { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.end-turn {
+  font-family: Georgia, serif; font-size: 18px; cursor: pointer; color: #fff;
+  background: linear-gradient(#c23a22, #8f1f14); border: 2px solid #ffb08a; border-radius: 10px;
+  padding: 10px 22px; box-shadow: 0 4px 0 #5c1208;
+}
+.end-turn:hover:not(:disabled) { filter: brightness(1.12); }
+.end-turn:disabled { opacity: 0.45; cursor: default; }
+.key-hint { font-size: 12px; opacity: 0.75; }
+
+/* ---------- end screens ---------- */
+.end-overlay {
+  position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(10, 5, 2, 0.82); text-align: center; z-index: 10;
+}
+.end-overlay[hidden] { display: none; }
+.end-title { font-size: 96px; margin: 0; letter-spacing: 8px; animation: flourish 0.7s ease-out; }
+.end-overlay.win .end-title { color: #ffd24d; text-shadow: 0 0 34px rgba(255, 190, 60, 0.8), 0 4px 0 #7a4a08; }
+.end-overlay.loss .end-title { color: #9aa7b5; text-shadow: 0 0 24px rgba(120, 140, 170, 0.5); }
+.end-line { font-size: 20px; color: #f3e7d3; margin: 10px 0 4px; }
+.end-score { font-size: 15px; color: #c9b48f; margin: 0 0 24px; }
+.end-burst {
+  position: absolute; width: 480px; height: 480px; border-radius: 50%; z-index: -1;
+  background: conic-gradient(from 0deg, transparent 0 12deg, rgba(255, 200, 80, 0.25) 12deg 20deg, transparent 20deg 32deg, rgba(255, 200, 80, 0.25) 32deg 40deg, transparent 40deg 52deg, rgba(255, 200, 80, 0.25) 52deg 60deg, transparent 60deg 72deg, rgba(255, 200, 80, 0.25) 72deg 80deg, transparent 80deg 92deg, rgba(255, 200, 80, 0.25) 92deg 100deg, transparent 100deg 112deg, rgba(255, 200, 80, 0.25) 112deg 120deg, transparent 120deg 132deg, rgba(255, 200, 80, 0.25) 132deg 140deg, transparent 140deg 152deg, rgba(255, 200, 80, 0.25) 152deg 160deg, transparent 160deg 172deg, rgba(255, 200, 80, 0.25) 172deg 180deg, transparent 180deg 192deg, rgba(255, 200, 80, 0.25) 192deg 200deg, transparent 200deg 212deg, rgba(255, 200, 80, 0.25) 212deg 220deg, transparent 220deg 232deg, rgba(255, 200, 80, 0.25) 232deg 240deg, transparent 240deg 252deg, rgba(255, 200, 80, 0.25) 252deg 260deg, transparent 260deg 272deg, rgba(255, 200, 80, 0.25) 272deg 280deg, transparent 280deg 292deg, rgba(255, 200, 80, 0.25) 292deg 300deg, transparent 300deg 312deg, rgba(255, 200, 80, 0.25) 312deg 320deg, transparent 320deg 332deg, rgba(255, 200, 80, 0.25) 332deg 340deg, transparent 340deg 352deg, rgba(255, 200, 80, 0.25) 352deg 360deg);
+  animation: spin 14s linear infinite;
+}
+.end-overlay.loss .end-burst { display: none; }
+
+/* ---------- motion ---------- */
+@keyframes flipIn { from { transform: rotateY(90deg) scale(0.8); opacity: 0; } to { transform: rotateY(0) scale(1); opacity: 1; } }
+@keyframes lunge { 0% { transform: translateY(0); } 35% { transform: translateY(-26px) scale(1.06); } 100% { transform: translateY(0); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes pulse { 0%, 100% { outline-color: #ffd24d; } 50% { outline-color: #fff; } }
+@keyframes flourish { from { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } to { transform: scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.dmg-float {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%); z-index: 5;
+  font-size: 26px; font-weight: bold; color: #ff5a3c; text-shadow: 0 2px 4px #000;
+  animation: floatUp 0.9s ease-out forwards; pointer-events: none;
+}
+@keyframes floatUp { from { opacity: 1; top: 0; } to { opacity: 0; top: -46px; } }
+
+/* screenshot mode: no entrance motion, the state is the picture */
+body.shot .card, body.shot .hero, body.shot .end-title { animation: none !important; transition: none !important; }
+body.shot .end-burst { animation: none !important; }
